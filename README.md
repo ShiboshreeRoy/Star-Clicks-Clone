@@ -23,7 +23,7 @@ A complete clone of the Star-Clicks advertising platform built with PHP, MySQL, 
 
 1. Clone this repository to your web server directory:
    ```bash
-   git clone <repository-url> c:/xampp/htdocs/ptc
+   git clone https://github.com/ShiboshreeRoy/Star-Clicks-Clone.git
    ```
 
 2. Create a MySQL database:
