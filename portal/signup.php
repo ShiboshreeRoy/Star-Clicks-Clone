@@ -31,7 +31,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error_message = 'Password must be at least 6 characters long.';
     } elseif ($password !== $confirm_password) {
         $error_message = 'Passwords do not match.';
+    } elseif (!validateCSRFToken($_POST['csrf_token'] ?? '')) {
+        $error_message = 'Invalid CSRF token. Please try again.';
+    } elseif (empty($captcha) || !isset($_SESSION['captcha']) || strtolower($captcha) !== strtolower($_SESSION['captcha'])) {
+        $error_message = 'Invalid CAPTCHA. Please try again.';
     } else {
+        // Validate user type
+        $valid_user_types = ['p', 'a', 'publisher', 'advertiser'];
+        if (!in_array($user_type, $valid_user_types)) {
+            $user_type = 'p'; // Default to publisher
+        }
+        
         // Check if email already exists
         $pdo = getDBConnection();
         $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
@@ -44,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $hashed_password = hashPassword($password);
             
             // Determine user type based on input or default
-            $db_user_type = ($user_type === 'a') ? 'advertiser' : 'publisher';
+            $db_user_type = ($user_type === 'a' || $user_type === 'advertiser') ? 'advertiser' : 'publisher';
             
             $stmt = $pdo->prepare("INSERT INTO users (email, password, first_name, last_name, user_type, status) VALUES (?, ?, ?, ?, ?, 'pending')");
             $result = $stmt->execute([$email, $hashed_password, $first_name, $last_name, $db_user_type]);
@@ -55,6 +65,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 // Log registration activity
                 $new_user_id = $pdo->lastInsertId();
                 logActivity($new_user_id, 'registration', 'New user registered with email: ' . $email);
+                
+                // Clear the CAPTCHA session
+                unset($_SESSION['captcha']);
                 
                 // Send welcome email (placeholder)
                 sendEmail($email, 'Welcome to Star-Clicks Clone', 'Thank you for registering with us. Your account is pending approval.');

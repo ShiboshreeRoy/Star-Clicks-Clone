@@ -46,6 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error_message = 'Password must be at least 6 characters long.';
     } elseif ($password !== $confirm_password) {
         $error_message = 'Passwords do not match.';
+    } elseif (!validateCSRFToken($_POST['csrf_token'] ?? '')) {
+        $error_message = 'Invalid CSRF token. Please try again.';
     } else {
         // Check if email already exists
         $pdo = getDBConnection();
@@ -81,7 +83,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -120,6 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php endif; ?>
         
         <form method="POST" action="">
+            <input type="hidden" name="csrf_token" value="<?php echo escape(generateCSRFToken()); ?>">
             <div class="form-group">
                 <label for="first_name" class="form-label">First Name</label>
                 <input type="text" id="first_name" name="first_name" class="form-control" 

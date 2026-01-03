@@ -32,11 +32,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($user && verifyPassword($password, $user['password'])) {
             if ($user['status'] === 'suspended') {
                 $error_message = 'Your admin account has been suspended.';
+            } elseif (empty($captcha) || !isset($_SESSION['captcha']) || strtolower($captcha) !== strtolower($_SESSION['captcha'])) {
+                $error_message = 'Invalid CAPTCHA. Please try again.';
             } else {
                 // Login successful
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_type'] = $user['user_type'];
                 $_SESSION['email'] = $user['email'];
+                
+                // Clear the CAPTCHA session
+                unset($_SESSION['captcha']);
                 
                 // Update last login
                 $updateStmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
