@@ -153,10 +153,28 @@ $csrf_token = generateCSRFToken();
             <div class="form-group">
                 <label for="captcha" class="form-label">Captcha</label>
                 <div class="flex items-center">
-                    <img src="../api/captcha.php" alt="Captcha" class="mr-3 border rounded">
-                    <input type="text" id="captcha" name="captcha" class="form-control flex-grow" required>
+                    <span id="captcha_text" class="mr-3 bg-gray-200 px-4 py-2 rounded border font-mono text-lg"></span>
+                    <input type="text" id="captcha" name="captcha" class="form-control flex-grow" required placeholder="Enter the code">
+                    <button type="button" class="ml-2 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded" onclick="refreshCaptcha()" title="Refresh Captcha">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
                 </div>
             </div>
+            
+            <script>
+                function refreshCaptcha() {
+                    fetch('../api/captcha.php')
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById('captcha_text').textContent = data;
+                        });
+                }
+                
+                // Load initial CAPTCHA
+                document.addEventListener('DOMContentLoaded', function() {
+                    refreshCaptcha();
+                });
+            </script>
             
             <div class="form-group">
                 <button type="submit" class="btn-primary w-full">

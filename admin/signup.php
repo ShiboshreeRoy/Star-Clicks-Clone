@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $confirm_password = $_POST['confirm_password'] ?? '';
     $first_name = sanitizeInput($_POST['first_name'] ?? '');
     $last_name = sanitizeInput($_POST['last_name'] ?? '');
+    $captcha = sanitizeInput($_POST['captcha'] ?? '');
     
     // Validation
     if (empty($email) || empty($password) || empty($confirm_password) || empty($first_name) || empty($last_name)) {
@@ -48,6 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error_message = 'Passwords do not match.';
     } elseif (!validateCSRFToken($_POST['csrf_token'] ?? '')) {
         $error_message = 'Invalid CSRF token. Please try again.';
+    } elseif (empty($captcha) || !isset($_SESSION['captcha']) || strtolower($captcha) !== strtolower($_SESSION['captcha'])) {
+        $error_message = 'Invalid CAPTCHA. Please try again.';
     } else {
         // Check if email already exists
         $pdo = getDBConnection();
@@ -73,6 +76,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 } else {
                     // First admin creation - no existing user to log activity for
                 }
+                
+                // Clear the CAPTCHA session
+                unset($_SESSION['captcha']);
                 
                 // Send welcome email (placeholder)
                 sendEmail($email, 'Admin Account Created - Star-Clicks Clone', 'Your admin account has been created successfully.');
@@ -149,6 +155,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <label for="confirm_password" class="form-label">Confirm Password</label>
                 <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
             </div>
+            
+            <div class="form-group">
+                <label for="captcha" class="form-label">Captcha</label>
+                <div class="flex items-center">
+                    <span id="captcha_text" class="mr-3 bg-gray-200 px-4 py-2 rounded border font-mono text-lg"></span>
+                    <input type="text" id="captcha" name="captcha" class="form-control flex-grow" required placeholder="Enter the code">
+                    <button type="button" class="ml-2 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded" onclick="refreshCaptcha()" title="Refresh Captcha">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <script>
+                function refreshCaptcha() {
+                    fetch('../api/captcha.php')
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById('captcha_text').textContent = data;
+                        });
+                }
+                
+                // Load initial CAPTCHA
+                document.addEventListener('DOMContentLoaded', function() {
+                    refreshCaptcha();
+                });
+            </script>
             
             <div class="form-group">
                 <button type="submit" class="btn-primary w-full">Create Admin Account</button>

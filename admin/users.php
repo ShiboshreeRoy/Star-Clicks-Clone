@@ -19,7 +19,7 @@ $error_message = '';
 $success_message = '';
 
 // Handle user status changes
-if (isset($_POST['change_status'])) {
+if (isset($_POST['new_status']) && !empty($_POST['user_id'])) {
     $user_id = intval($_POST['user_id'] ?? 0);
     $new_status = sanitizeInput($_POST['new_status'] ?? '');
     
